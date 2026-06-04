@@ -1,0 +1,6 @@
+{
+  "name": "ATS CV Tailor",
+  "description": "Optimize your resume for specific job descriptions and ATS systems.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
