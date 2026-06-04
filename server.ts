@@ -6,7 +6,8 @@ import multer from 'multer';
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+const pdfParseModule = require('pdf-parse');
+const PDFParse = pdfParseModule.PDFParse || pdfParseModule.default?.PDFParse;
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -14,16 +15,21 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   app.post('/api/parse-pdf', upload.single('resumePdf'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      const data = await pdfParse(req.file.buffer);
+      
+      const pdf = new PDFParse(new Uint8Array(req.file.buffer));
+      const data = await pdf.getText();
+      
       res.json({ text: data.text });
     } catch (err: any) {
+
       console.error('Error parsing PDF:', err);
       res.status(500).json({ error: 'Failed to parse PDF file' });
     }
@@ -219,6 +225,11 @@ You MUST return ONLY a JSON object representing the CV data and ATS analysis, wi
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Express global error:', err);
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);

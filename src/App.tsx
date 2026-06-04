@@ -712,7 +712,14 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: oldText }),
       });
-      const data = await response.json();
+      let data;
+      const textResponse = await response.text();
+      try {
+        data = JSON.parse(textResponse);
+      } catch (e) {
+        if (!response.ok) throw new Error(`Rewriting failed: The server returned an error.`);
+        throw new Error('Failed to parse AI response as JSON.');
+      }
       if (!response.ok) throw new Error(data.error || 'Failed to rewrite');
 
       const newResult = { ...result };
@@ -759,7 +766,15 @@ export default function App() {
         body: formData,
       });
 
-      const data = await response.json();
+      let data;
+      const textResponse = await response.text();
+      try {
+        data = JSON.parse(textResponse);
+      } catch (e) {
+        if (!response.ok) throw new Error(`Upload failed. The file might be too large or the server encountered an error.`);
+        throw new Error('Failed to parse server response.');
+      }
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to parse PDF');
       }
@@ -832,7 +847,15 @@ ${cv.education.map(e => `${e.degree} at ${e.school} | ${e.dates}\n${e.details ||
         body: JSON.stringify({ jobDescription, resume, style }),
       });
 
-      const data = await response.json();
+      let data;
+      const textResponse = await response.text();
+      try {
+        data = JSON.parse(textResponse);
+      } catch (e) {
+        if (!response.ok) throw new Error(`Optimization failed: The request was too large or the server returned an error.`);
+        throw new Error('Failed to parse AI response as JSON.');
+      }
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to optimize CV');
       }
