@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BriefcaseBusiness, FileText, Loader2, Download, CheckCircle2, ChevronRight, PenTool, Mail, Phone, MapPin, Link as LinkIcon, Copy, History, Lightbulb, FileJson, Eye, X, Upload, Sparkles, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { BriefcaseBusiness, FileText, Loader2, Download, CheckCircle2, ChevronRight, PenTool, Mail, Phone, MapPin, Link as LinkIcon, Copy, History, Lightbulb, FileJson, Eye, X, Upload, Sparkles, AlertTriangle, TrendingUp, TrendingDown, Minus, Plus } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
 
 type StyleOption = 'Minimalist' | 'Modern' | 'Professional' | 'Tech/Developer';
 const STYLES: StyleOption[] = ['Minimalist', 'Modern', 'Professional', 'Tech/Developer'];
@@ -172,7 +173,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
     return parts.map((part, i) => {
       // Check if this part matches any of the keywords (case-insensitive)
       if (keywords.some(k => k.toLowerCase() === part.toLowerCase())) {
-         return <span key={i} className={theme.highlightBg}>{part}</span>;
+         return <span key={i} className={`ats-highlight ${theme.highlightBg}`}>{part}</span>;
       }
       return part;
     });
@@ -185,17 +186,17 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
           <h1 className="text-4xl font-bold tracking-tight uppercase">{data.personalInfo?.name}</h1>
           <p className="text-xl mt-1 tracking-wider text-gray-700">{data.personalInfo?.title}</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-gray-600 font-medium">
-            <span>{data.personalInfo?.email}</span>
-            <span>{data.personalInfo?.phone}</span>
+            {data.personalInfo?.email && <a href={`mailto:${data.personalInfo.email}`} className="hover:text-black">{data.personalInfo.email}</a>}
+            {data.personalInfo?.phone && <a href={`tel:${data.personalInfo.phone.replace(/[^0-9+]/g, '')}`} className="hover:text-black">{data.personalInfo.phone}</a>}
             <span>{data.personalInfo?.location}</span>
             {data.personalInfo?.links?.map((link, i) => (
-              <span key={i}>{link}</span>
+              <a key={i} href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="hover:text-black">{link}</a>
             ))}
           </div>
         </header>
         
         {data.summary && (
-          <section className="mb-8">
+          <section className="mb-8 page-break-avoid">
             <p className="text-base leading-relaxed">{highlightText(data.summary)}</p>
           </section>
         )}
@@ -209,7 +210,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
           )}
           <div className="space-y-6">
             {data.experience?.map((exp, i) => (
-              <div key={i}>
+              <div key={i} className="page-break-avoid">
                 <div className="flex justify-between items-baseline mb-1">
                   <h3 className="font-bold text-lg">{exp.role}</h3>
                   <span className="text-sm font-semibold">{exp.dates}</span>
@@ -240,11 +241,11 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
         </section>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-2">
-           <section>
+           <section className="page-break-avoid">
             <h2 className="text-lg font-bold uppercase tracking-widest border-b border-gray-300 pb-1 mb-4">Education</h2>
             <div className="space-y-4">
               {data.education?.map((edu, i) => (
-                <div key={i}>
+                <div key={i} className="page-break-avoid">
                   <h3 className="font-bold">{edu.degree}</h3>
                   <p className="font-medium text-gray-700">{edu.school}</p>
                   <p className="text-sm text-gray-500">{edu.dates}</p>
@@ -254,11 +255,11 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
             </div>
            </section>
            
-           <section>
+           <section className="page-break-avoid">
             <h2 className="text-lg font-bold uppercase tracking-widest border-b border-gray-300 pb-1 mb-4">Skills</h2>
             <div className="space-y-3">
               {data.skills?.map((skill, i) => (
-                <div key={i}>
+                <div key={i} className="page-break-avoid">
                   <h3 className="font-semibold text-sm uppercase text-gray-800">{skill.category}</h3>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {skill.items?.map((item, j) => (
@@ -287,11 +288,11 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
           </div>
           
           <div className="space-y-4 mb-10 text-sm text-slate-600">
-            <div className="flex items-center gap-3"><Mail className={`w-4 h-4 ${theme.icon}`} /> {data.personalInfo?.email}</div>
-            <div className="flex items-center gap-3"><Phone className={`w-4 h-4 ${theme.icon}`} /> {data.personalInfo?.phone}</div>
+            {data.personalInfo?.email && <a href={`mailto:${data.personalInfo.email}`} className="flex items-center gap-3 hover:text-slate-900"><Mail className={`w-4 h-4 ${theme.icon}`} /> {data.personalInfo.email}</a>}
+            {data.personalInfo?.phone && <a href={`tel:${data.personalInfo.phone.replace(/[^0-9+]/g, '')}`} className="flex items-center gap-3 hover:text-slate-900"><Phone className={`w-4 h-4 ${theme.icon}`} /> {data.personalInfo.phone}</a>}
             <div className="flex items-center gap-3"><MapPin className={`w-4 h-4 ${theme.icon}`} /> {data.personalInfo?.location}</div>
             {data.personalInfo?.links?.map((link, i) => (
-              <div key={i} className="flex items-center gap-3"><LinkIcon className={`w-4 h-4 ${theme.icon}`} /> {link}</div>
+              <a key={i} href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-slate-900"><LinkIcon className={`w-4 h-4 ${theme.icon}`} /> {link}</a>
             ))}
           </div>
 
@@ -299,7 +300,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Skills</h2>
             <div className="space-y-5">
               {data.skills?.map((skill, i) => (
-                <div key={i}>
+                <div key={i} className="page-break-avoid">
                   <h3 className="text-sm font-semibold text-slate-800 mb-2">{skill.category}</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {skill.items?.map((item, j) => {
@@ -329,7 +330,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Education</h2>
             <div className="space-y-4">
               {data.education?.map((edu, i) => (
-                <div key={i} className="text-sm">
+                <div key={i} className="text-sm page-break-avoid">
                   <h3 className="font-semibold text-slate-800">{edu.degree}</h3>
                   <p className="text-slate-600">{edu.school}</p>
                   <p className="text-slate-400 text-xs mt-0.5">{edu.dates}</p>
@@ -342,7 +343,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
         {/* Right Column (Main content) */}
         <div className={`w-full ${layout === 'Split' ? 'md:w-1/2 print:w-1/2' : 'md:w-2/3 print:w-2/3'} p-8 md:p-10 bg-white`}>
           {data.summary && (
-            <div className="mb-10">
+            <div className="mb-10 page-break-avoid">
               <h2 className={`text-xl font-bold text-slate-900 border-b-2 ${theme.border} pb-2 mb-4 inline-block`}>Profile</h2>
               <p className="text-slate-600 text-sm leading-relaxed">{highlightText(data.summary)}</p>
             </div>
@@ -357,7 +358,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
             )}
             <div className="space-y-8">
               {data.experience?.map((exp, i) => (
-                <div key={i} className="relative">
+                <div key={i} className="relative page-break-avoid">
                   {/* Timeline dot */}
                   <div className={`hidden md:block print:block absolute -left-10 top-1.5 w-2.5 h-2.5 rounded-full ${theme.bg} ring-4 ring-white`}></div>
                   
@@ -403,20 +404,20 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
           <div className="mt-4 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-sm text-gray-600">
              <span>{data.personalInfo?.location}</span>
              <span>•</span>
-             <span>{data.personalInfo?.phone}</span>
+             {data.personalInfo?.phone && <a href={`tel:${data.personalInfo.phone.replace(/[^0-9+]/g, '')}`} className="hover:text-black">{data.personalInfo.phone}</a>}
              <span>•</span>
-             <span>{data.personalInfo?.email}</span>
+             {data.personalInfo?.email && <a href={`mailto:${data.personalInfo.email}`} className="hover:text-black">{data.personalInfo.email}</a>}
              {data.personalInfo?.links?.map((link, i) => (
                 <React.Fragment key={i}>
                   <span>•</span>
-                  <span>{link}</span>
+                  <a href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="hover:text-black">{link}</a>
                 </React.Fragment>
              ))}
           </div>
         </header>
 
         {data.summary && (
-          <section className="mb-6">
+          <section className="mb-6 page-break-avoid">
             <p className="text-justify text-sm leading-relaxed text-gray-800">{highlightText(data.summary)}</p>
           </section>
         )}
@@ -430,7 +431,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
           )}
           <div className="space-y-5">
              {data.experience?.map((exp, i) => (
-                <div key={i}>
+                <div key={i} className="page-break-avoid">
                   <div className="flex justify-between items-end mb-1">
                     <h3 className="font-bold text-gray-900">{exp.company}</h3>
                     <span className="font-semibold text-gray-900 text-sm">{exp.location}</span>
@@ -464,7 +465,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
           <h2 className="text-sm font-bold uppercase tracking-widest text-gray-900 border-b border-gray-900 pb-1 mb-4 text-center">Education</h2>
           <div className="space-y-3">
              {data.education?.map((edu, i) => (
-                <div key={i} className="flex justify-between items-baseline text-sm">
+                <div key={i} className="flex justify-between items-baseline text-sm page-break-avoid">
                   <div>
                     <span className="font-bold text-gray-900">{edu.school}</span>
                     <span className="text-gray-800"> — {edu.degree}</span>
@@ -475,11 +476,11 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
           </div>
         </section>
 
-        <section>
+        <section className="page-break-avoid">
           <h2 className="text-sm font-bold uppercase tracking-widest text-gray-900 border-b border-gray-900 pb-1 mb-4 text-center">Skills & Competencies</h2>
           <div className="text-sm text-gray-800 space-y-2">
              {data.skills?.map((skill, i) => (
-                <div key={i} className="flex gap-2">
+                <div key={i} className="flex gap-2 page-break-avoid">
                   <strong className="font-bold flex-shrink-0">{skill.category}: </strong>
                   <div className="flex flex-wrap gap-1.5">
                     {skill.items?.map((it, j) => (
@@ -503,14 +504,17 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
         <h1 className="text-3xl font-bold text-[#58A6FF] print:text-blue-700">{data.personalInfo?.name}</h1>
         <p className="text-[#8B949E] print:text-gray-600 mt-2 text-sm">{">"} {data.personalInfo?.title}</p>
         <div className="mt-4 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-6 text-sm text-[#8B949E] print:text-gray-600">
-           <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" />{data.personalInfo?.email}</span>
-           <span className="flex items-center gap-2"><LinkIcon className="w-3.5 h-3.5" />{data.personalInfo?.links?.[0] || 'github.com/developer'}</span>
+           {data.personalInfo?.email && <a href={`mailto:${data.personalInfo.email}`} className="flex items-center gap-2 hover:text-[#C9D1D9] print:hover:text-black"><Mail className="w-3.5 h-3.5" />{data.personalInfo.email}</a>}
+           {data.personalInfo?.phone && <a href={`tel:${data.personalInfo.phone.replace(/[^0-9+]/g, '')}`} className="flex items-center gap-2 hover:text-[#C9D1D9] print:hover:text-black"><Phone className="w-3.5 h-3.5" />{data.personalInfo.phone}</a>}
+           {data.personalInfo?.links?.map((link, i) => (
+             <a key={i} href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-[#C9D1D9] print:hover:text-black"><LinkIcon className="w-3.5 h-3.5" />{link}</a>
+           ))}
            <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" />{data.personalInfo?.location}</span>
         </div>
       </header>
 
       {data.summary && (
-        <section className="mb-10">
+        <section className="mb-10 page-break-avoid">
           <p className="text-sm leading-relaxed text-[#C9D1D9] print:text-gray-800">
              <span className="text-[#7EE787] print:text-green-600">const</span> <span className="text-[#79C0FF] print:text-blue-500">summary</span> = <span className="text-[#A5D6FF] print:text-gray-700">`{highlightText(data.summary)}`</span>;
           </p>
@@ -530,7 +534,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
               )}
               <div className="space-y-8 border-l border-[#30363D] print:border-gray-300 pl-4 print:pl-6 ml-2">
                 {data.experience?.map((exp, i) => (
-                  <div key={i} className="relative">
+                  <div key={i} className="relative page-break-avoid">
                     <div className="absolute w-2 h-2 bg-[#8B949E] print:bg-gray-400 rounded-full -left-5 print:-left-7 top-1.5 hidden md:block print:block"></div>
                     <div className="flex flex-col sm:flex-row sm:items-baseline justify-between mb-2 gap-1 sm:gap-0">
                       <h3 className="font-bold text-[#E6EDF3] print:text-black">{exp.role} <span className="text-[#8B949E] print:text-gray-500 font-normal">@ {exp.company}</span></h3>
@@ -566,7 +570,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
               </h2>
               <div className="space-y-6">
                  {data.skills?.map((skill, i) => (
-                    <div key={i}>
+                    <div key={i} className="page-break-avoid">
                       <h3 className="text-xs text-[#E6EDF3] print:text-black font-bold uppercase tracking-wider mb-3">{skill.category}</h3>
                       <div className="flex flex-wrap gap-2">
                         {skill.items?.map((item, j) => (
@@ -587,7 +591,7 @@ const CVRenderer = ({ data, style, color, layout, onRewrite, rewritingIndices, m
               </h2>
               <div className="space-y-4">
                  {data.education?.map((edu, i) => (
-                    <div key={i} className="text-sm">
+                    <div key={i} className="text-sm page-break-avoid">
                       <div className="font-bold text-[#E6EDF3] print:text-black mb-1">{edu.degree}</div>
                       <div className="text-[#8B949E] print:text-gray-600">{edu.school}</div>
                       <div className="text-xs text-[#8B949E] print:text-gray-500 mt-1">[{edu.dates}]</div>
@@ -616,6 +620,7 @@ export default function App() {
   const [rewritingIndices, setRewritingIndices] = useState<{exp: number, ach: number} | null>(null);
   const [careerGaps, setCareerGaps] = useState<CareerGap[]>([]);
   const [careerNoteInput, setCareerNoteInput] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -842,7 +847,32 @@ ${cv.education.map(e => `${e.degree} at ${e.school} | ${e.dates}\n${e.details ||
   };
 
   const handlePrint = () => {
-    window.print();
+    const element = document.getElementById('cv-to-print') || document.getElementById('cv-to-print-main');
+    if (!element) return;
+
+    const baseName = result?.cv.personalInfo.name.replace(/\s+/g, '_') || 'Resume';
+    const finalFilename = companyName.trim() ? `${companyName.trim().replace(/\s+/g, '_')}_Resume.pdf` : `${baseName}.pdf`;
+
+    const opt = {
+      margin: 0,
+      filename: finalFilename,
+      image: { type: 'jpeg' as const, quality: 1 },
+      html2canvas: { 
+        scale: 4, 
+        useCORS: true,
+        onclone: (doc: Document) => {
+          const highlights = doc.querySelectorAll('.ats-highlight');
+          highlights.forEach((el) => {
+            el.className = '';
+          });
+        }
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
+      pagebreak: { mode: 'css', avoid: ['.page-break-avoid', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', '.group', '.break-inside-avoid'] },
+      enableLinks: true
+    };
+
+    html2pdf().set(opt).from(element).save();
   };
 
   return (
@@ -1185,6 +1215,15 @@ ${cv.education.map(e => `${e.degree} at ${e.school} | ${e.dates}\n${e.details ||
                     <FileJson className="w-4 h-4" />
                     <span className="hidden sm:inline">Export JSON</span>
                   </button>
+                  <div className="flex-1 sm:flex-none flex items-center bg-white border border-gray-300 rounded-xl px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
+                    <input
+                      type="text"
+                      placeholder="Company Name (for PDF)"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="w-full sm:w-40 flex-1 outline-none text-sm bg-transparent"
+                    />
+                  </div>
                   <button
                     onClick={handlePrint}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white font-semibold py-2.5 px-5 rounded-xl transition-all shadow-sm"
@@ -1245,12 +1284,18 @@ ${cv.education.map(e => `${e.degree} at ${e.school} | ${e.dates}\n${e.details ||
                             </div>
                             
                             <div className="bg-red-50/50 rounded-xl p-4 border border-red-100">
-                              <h5 className="text-sm font-bold text-red-800 mb-2">Missing Keywords (Consider Adding)</h5>
+                              <h5 className="text-sm font-bold text-red-800 mb-2">Suggested Skills to Add <span className="font-normal text-xs text-red-600 ml-1">(Click to insert)</span></h5>
                               <div className="flex flex-wrap gap-1.5">
                                 {result.atsScore.missingKeywords.map((kw, i) => (
-                                  <span key={i} className="bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-md">
+                                  <button 
+                                    key={i} 
+                                    onClick={() => setResume(prev => prev + (prev.endsWith('\n') ? '' : '\n') + 'Skill: ' + kw)}
+                                    className="bg-red-100/80 hover:bg-red-200 text-red-700 text-xs font-semibold px-2 py-1 rounded-md transition-all flex items-center gap-1 active:scale-95 group shadow-sm"
+                                    title="Click to add to your raw resume text"
+                                  >
+                                    <Plus className="w-3 h-3 text-red-500 group-hover:text-red-700" />
                                     {kw}
-                                  </span>
+                                  </button>
                                 ))}
                                 {result.atsScore.missingKeywords.length === 0 && <span className="text-xs text-red-600">None missing!</span>}
                               </div>
@@ -1305,7 +1350,9 @@ ${cv.education.map(e => `${e.degree} at ${e.school} | ${e.dates}\n${e.details ||
                     )}
 
                     {/* CV Render */}
-                    <CVRenderer data={result.cv} style={style} color={colorOption} layout={layoutOption} onRewrite={handleRewriteAchievement} rewritingIndices={rewritingIndices} matchedKeywords={result.atsScore?.matchedKeywords} />
+                    <div id="cv-to-print-main">
+                      <CVRenderer data={result.cv} style={style} color={colorOption} layout={layoutOption} onRewrite={handleRewriteAchievement} rewritingIndices={rewritingIndices} matchedKeywords={result.atsScore?.matchedKeywords} />
+                    </div>
                   </div>
                 )}
              </div>
@@ -1334,7 +1381,7 @@ ${cv.education.map(e => `${e.degree} at ${e.school} | ${e.dates}\n${e.details ||
              </div>
              <div className="flex-1 overflow-auto bg-zinc-800/50 p-2 sm:p-10 flex justify-center custom-scrollbar">
                 <div className="origin-top-left sm:origin-top scale-[0.4] sm:scale-75 md:scale-90 lg:scale-100 transition-transform">
-                  <div className="w-[850px] shadow-2xl bg-white mx-auto sm:mx-0">
+                  <div id="cv-to-print" className="w-[850px] shadow-2xl bg-white mx-auto sm:mx-0">
                      <CVRenderer data={result.cv} style={style} color={colorOption} layout={layoutOption} matchedKeywords={result.atsScore?.matchedKeywords} />
                   </div>
                 </div>
